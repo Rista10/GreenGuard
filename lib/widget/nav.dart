@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:green_guard/pages/homepage.dart';
+import 'package:green_guard/pages/realTimeData.dart';
 
 class NavBar extends StatefulWidget {
   const NavBar({super.key});
@@ -30,7 +32,9 @@ class _NavBarState extends State<NavBar> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               IconButton(
-                onPressed: (){}, 
+                onPressed: (){
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>HomePage()));
+                }, 
                 icon: const Icon(Icons.home)),
                 IconButton(
                   onPressed: (){
@@ -39,12 +43,14 @@ class _NavBarState extends State<NavBar> {
                   icon: const Icon(Icons.qr_code_scanner)),
                    IconButton(
                 onPressed: (){
-                  
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>RealTimeData()));
+                   
                 }, 
                 icon: const Icon(Icons.border_all)),
                   IconButton(
-                    onPressed: (){}, 
-                    icon: const Icon(Icons.person))
+                    onPressed: (){
+                       }, 
+                    icon: const Icon(Icons.menu))
             ],
           ),
         ),

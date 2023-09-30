@@ -1,7 +1,14 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:http/http.dart' as http;
 
 import 'package:flutter/material.dart';
 import 'package:green_guard/widget/nav.dart';
+import 'package:http_parser/http_parser.dart';
+import 'package:dio/dio.dart';
+
+
+
 
 class PlantHealth extends StatefulWidget {
   File? plantImage;
@@ -11,7 +18,51 @@ class PlantHealth extends StatefulWidget {
   State<PlantHealth> createState() => _PlantHealthState();
 }
 
-class _PlantHealthState extends State<PlantHealth> {
+class _PlantHealthState extends State<PlantHealth> 
+{
+  String? plantDisease;
+  String? plantName;
+  Future<void> uploadImage() async {
+    final dio = Dio();
+    var formData=FormData.fromMap({
+      'file':await MultipartFile.fromFile(widget.plantImage!.path, filename: 'image.jpg')
+    });
+
+    var response=await dio.post('http://8794-202-166-219-119.ngrok.io/upload/', 
+      data: formData,);
+try{
+
+    if (response.statusCode == 200) {
+      print("sucess to upload image");
+      
+      setState(() {
+        plantDisease=response.data['class'];
+        List<String> parts=plantDisease!.split("___");
+        if(parts.length>0){
+          plantName=parts[0];
+        }
+      });
+
+    
+    } else {
+      print(response.statusCode);
+      print('Failed');
+    }
+}
+catch(err){
+  print(err);
+}
+  }
+
+  
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    uploadImage();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -20,10 +71,13 @@ class _PlantHealthState extends State<PlantHealth> {
         iconTheme: IconThemeData(
           color: Colors.black, // Change this color to the desired color
         ),
-        title: Text('My plant',style: TextStyle(color: Colors.black),),
+        backgroundColor: Color.fromARGB(255, 171, 253, 173),
+        title: Text(
+          'My plant',
+          style: TextStyle(color: Colors.black),
+        ),
         toolbarHeight: 65,
         elevation: 0,
-        backgroundColor: Colors.white,
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -44,7 +98,7 @@ class _PlantHealthState extends State<PlantHealth> {
                 height: 12,
               ),
               Text(
-                'Dumb Cane',
+                '${plantName}',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w900,
@@ -139,47 +193,33 @@ class _PlantHealthState extends State<PlantHealth> {
                       border: Border.all(color: Colors.grey, width: 2)),
                   child: Padding(
                     padding: const EdgeInsets.all(10.0),
-                    child: Row(children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(25),
-                        child: Image.file(
-                          File(widget.plantImage!.path).absolute,
-                          width: 150,
-                          height: 120,
-                          fit: BoxFit.fill,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '${plantDisease} detected',
+                          style: TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.bold),
                         ),
-                      ),
-                      SizedBox(
-                        width: 8,
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'This plant looks healthy !',
-                            style: TextStyle(
-                                fontSize: 15, fontWeight: FontWeight.bold),
-                          ),
-                          SizedBox(
-                            height: 10,
-                          ),
-                          TextButton(
-                              style: ButtonStyle(
-                                  shape: MaterialStateProperty.all(
-                                      RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(5),
-                                          side: const BorderSide(
-                                            color: Colors.green,
-                                          )))),
-                              onPressed: () {},
-                              child: Text(
-                                'Save to garden',
-                                style: TextStyle(color: Colors.green),
-                              ))
-                        ],
-                      )
-                    ]),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        TextButton(
+                            style: ButtonStyle(
+                                shape: MaterialStateProperty.all(
+                                    RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(5),
+                                        side: const BorderSide(
+                                          color: Colors.green,
+                                        )))),
+                            onPressed: () {},
+                            child: Text(
+                              'Save to garden',
+                              style: TextStyle(color: Colors.green),
+                            ))
+                      ],
+                    ),
                   ),
                 ),
               ),

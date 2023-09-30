@@ -1,5 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:green_guard/model/plantmodel.dart';
+import 'package:http/http.dart'as http;
+
 
 class PlantDetail extends StatefulWidget {
   Data plantDetail;
@@ -11,15 +15,19 @@ class PlantDetail extends StatefulWidget {
 }
 
 class _PlantDetailState extends State<PlantDetail> {
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        iconTheme: IconThemeData(
+          color: Colors.black, // Change this color to the desired color
+        ),
         elevation: 0,
         toolbarHeight: 80,
         backgroundColor: Color.fromRGBO(240, 244, 240, 1),
         title: Image.asset('assets/images/title_logo.png'),
+        centerTitle: true,
       ),
       body: Column(
         children: [

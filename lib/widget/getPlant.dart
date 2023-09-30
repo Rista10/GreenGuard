@@ -16,13 +16,10 @@ PlantModel? plantModel;
 Future<void> fetchData() async {
   final response = await http.get(Uri.parse(
       'https://trefle.io/api/v1/plants?token=mO00Pcm7MWkGhFwKgLQTEvV366mlOCbf1OpYkrTR4po'));
-  print(response.statusCode);
 
   if (response.statusCode == 200) {
     final jsonResponse = jsonDecode(response.body);
-    print(jsonResponse);
     plantModel = PlantModel.fromJson(jsonResponse);
-    print(plantModel);
   } else {
     print('Failed to load data');
   }

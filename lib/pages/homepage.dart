@@ -5,6 +5,8 @@ import 'package:green_guard/pages/plantHealth.dart';
 import 'package:green_guard/widget/getPlant.dart';
 import 'package:green_guard/widget/nav.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart ' as http;
+
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -18,7 +20,8 @@ class _HomePageState extends State<HomePage> {
   final _picker=ImagePicker();
 
   Future getPlantImage()async{
-    final pickedFile= await _picker.pickImage(source: ImageSource.camera,imageQuality: 80);
+    
+    final pickedFile= await _picker.pickImage(source: ImageSource.gallery,imageQuality: 80);
     if(pickedFile!=null)
     {
       setState(() {
