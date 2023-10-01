@@ -7,9 +7,6 @@ import 'package:green_guard/widget/nav.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:dio/dio.dart';
 
-
-
-
 class PlantHealth extends StatefulWidget {
   File? plantImage;
   PlantHealth({super.key, required this.plantImage});
@@ -18,60 +15,144 @@ class PlantHealth extends StatefulWidget {
   State<PlantHealth> createState() => _PlantHealthState();
 }
 
-class _PlantHealthState extends State<PlantHealth> 
-{
-  String? plantDisease;
+class _PlantHealthState extends State<PlantHealth> {
+  String? plantDisease='';
   String? plantName;
-  Future<void> uploadImage() async {
-    final dio = Dio();
-    var formData=FormData.fromMap({
-      'file':await MultipartFile.fromFile(widget.plantImage!.path, filename: 'image.jpg')
+  String temperature = '';
+  String humidity = '';
+  String moisture = '';
+  String heatIndex = '';
+
+  Map<String, List<String>> preventiveMeasures = {
+    'Apple___healthy': [
+      "Maintain good orchard hygiene.",
+      "Prune and remove dead or diseased branches.",
+      "Monitor for early signs of diseases."
+    ],
+    'Apple___Apple_scab': [
+      "Prune and remove infected leaves and branches.",
+      "Apply fungicides in early spring before buds open.",
+      "Ensure good air circulation by proper spacing of apple trees.",
+      "Keep the area around the apple tree clean from fallen leaves and debris."
+    ],
+    'Apple___Black_rot': [
+      "Prune and destroy infected branches.",
+      "Apply fungicides during the growing season.",
+      "Remove mummified fruit from the tree and the ground.",
+      "Promote good air circulation by proper pruning."
+    ],
+    'Apple___Cedar_apple_rust': [
+      "Prune and remove galls on cedar trees.",
+      "Apply fungicides during wet periods in the spring.",
+      "Remove any nearby cedar trees if possible.",
+      "Maintain good sanitation around apple trees."
+    ],
+    'Potato___Early_blight': [
+      "Remove infected leaves and destroy them.",
+      "Apply fungicides early in the season.",
+      "Avoid overhead watering, as it can spread the disease.",
+      "Crop rotation can help reduce the risk of recurrence."
+    ],
+    'Potato___Late_blight': [
+      "Apply fungicides preventively during wet conditions.",
+      "Remove and destroy infected plants immediately.",
+      "Avoid overhead watering.",
+      "Properly space potato plants for good air circulation."
+    ],
+    'Potato___healthy': [
+      "Maintain good cultural practices, including proper watering and fertilization.",
+      "Implement crop rotation to reduce disease risk.",
+      "Inspect plants regularly for early signs of disease and take action promptly."
+    ],
+    'Tomato___Bacterial_spot': [
+      "Remove and destroy infected plants.",
+      "Apply copper-based or streptomycin-based sprays.",
+      "Avoid overhead watering.",
+      "Rotate crops to prevent the build-up of the bacteria in the soil."
+    ],
+    'Tomato___Early_blight': [
+      "Remove infected leaves and destroy them.",
+      "Apply fungicides early in the season.",
+      "Mulch around tomato plants to prevent soil splash.",
+      "Properly space and stake tomato plants for air circulation."
+    ],
+  };
+
+  Future<void> getInformation() async {
+    var response = await http.get(
+        Uri.parse('https://d675-120-89-104-102.ngrok.io/view_sensor_data'));
+    print(response.body);
+    final finalResponse = jsonDecode(response.body);
+    print(finalResponse);
+    setState(() {
+      temperature = finalResponse['temperature'];
+      humidity = finalResponse['humid'];
+      moisture = finalResponse['moisturevalue'];
+      heatIndex = finalResponse['heatindex'];
     });
-
-    var response=await dio.post('http://8794-202-166-219-119.ngrok.io/upload/', 
-      data: formData,);
-try{
-
-    if (response.statusCode == 200) {
-      print("sucess to upload image");
-      
-      setState(() {
-        plantDisease=response.data['class'];
-        List<String> parts=plantDisease!.split("___");
-        if(parts.length>0){
-          plantName=parts[0];
-        }
-      });
-
-    
-    } else {
-      print(response.statusCode);
-      print('Failed');
+    try {
+      if (response.statusCode == 200) {
+        print("sucess to upload image");
+      } else {
+        print(response.statusCode);
+        print('Failed');
+      }
+    } catch (err) {
+      print("error");
+      print(err);
     }
-}
-catch(err){
-  print(err);
-}
   }
 
-  
+  final dio = Dio();
+  Future<void> uploadImage() async {
+    var formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(widget.plantImage!.path,
+          filename: widget.plantImage!.path)
+    });
+    try {
+      var response = await dio.post(
+        'https://d675-120-89-104-102.ngrok.io/upload/',
+        data: formData,
+        options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+      );
+
+      print(response.statusCode);
+      if (response.statusCode == 200) {
+        print("sucess to upload image");
+
+        setState(() {
+          plantDisease = response.data['class'];
+          List<String> parts = plantDisease!.split("___");
+          if (parts.length > 0) {
+            plantName = parts[0];
+          }
+        });
+      } else {
+        print(response.statusCode);
+        print('Failed');
+      }
+    } catch (err) {
+      print(err);
+    }
+  }
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     uploadImage();
+    getInformation();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Color.fromARGB(255, 251, 248, 248),
       appBar: AppBar(
         iconTheme: IconThemeData(
           color: Colors.black, // Change this color to the desired color
         ),
-        backgroundColor: Color.fromARGB(255, 171, 253, 173),
+        backgroundColor: Color.fromARGB(255, 251, 248, 248),
         title: Text(
           'My plant',
           style: TextStyle(color: Colors.black),
@@ -81,23 +162,22 @@ catch(err){
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(30),
-                child: Image.file(
-                  File(widget.plantImage!.path).absolute,
-                  width: double.infinity,
-                  height: 280,
-                  fit: BoxFit.fill,
-                ),
-              ),
-              SizedBox(
-                height: 12,
-              ),
-              Text(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Image.file(
+              File(widget.plantImage!.path).absolute,
+              width: double.infinity,
+              height: 280,
+              fit: BoxFit.fill,
+            ),
+            SizedBox(
+              height: 12,
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 0, 8),
+              child: Text(
                 '${plantName}',
                 style: TextStyle(
                   fontSize: 28,
@@ -105,126 +185,128 @@ catch(err){
                   fontFamily: 'Philosopher',
                 ),
               ),
-              SizedBox(
-                height: 15,
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      height: 150,
-                      width: 172,
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(25),
-                          border: Border.all(color: Colors.grey, width: 2)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.thermostat,
-                              size: 50,
-                            ),
-                            Text(
-                              'Temperature',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 19,
-                              ),
-                            ),
-                            Text(
-                              '36 degree',
-                              style: TextStyle(
-                                color: Colors.green,
-                                fontSize: 18,
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
-                    Container(
-                      height: 150,
-                      width: 172,
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(25),
-                          border: Border.all(color: Colors.grey, width: 2)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.water_drop_outlined,
-                              size: 50,
-                            ),
-                            Text(
-                              'Humidity',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 19,
-                              ),
-                            ),
-                            Text(
-                              '40',
-                              style: TextStyle(
-                                color: Colors.green,
-                                fontSize: 18,
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                    )
-                  ],
-                ),
-              ),
-              SizedBox(
-                height: 6,
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Container(
-                  height: 150,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.grey, width: 2)),
-                  child: Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '${plantDisease} detected',
-                          style: TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.bold),
-                        ),
-                        SizedBox(
-                          height: 10,
-                        ),
-                        TextButton(
-                            style: ButtonStyle(
-                                shape: MaterialStateProperty.all(
-                                    RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(5),
-                                        side: const BorderSide(
-                                          color: Colors.green,
-                                        )))),
-                            onPressed: () {},
-                            child: Text(
-                              'Save to garden',
-                              style: TextStyle(color: Colors.green),
-                            ))
-                      ],
-                    ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Card(
+                color: Colors.white,
+                child: ListTile(
+                  title: Text("Model prediction result:",
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  subtitle: Text(
+                    '${plantDisease} detected',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+            SizedBox(
+              height: 5,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Card(
+                color: Colors.white,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        "More Details:",
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: ListTile(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20)),
+                        tileColor: Color.fromARGB(255, 242, 251, 242),
+                        leading: Image.asset('assets/images/temperature.png'),
+                        title: Text("Temperature:"),
+                        subtitle: Text("${temperature}"),
+                      ),
+                    ),
+                    ListTile(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20)),
+                      leading: Image.asset('assets/images/humidity.png'),
+                      title: Text("Humidity:"),
+                      subtitle: Text("${humidity}"),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: ListTile(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20)),
+                        tileColor: Color.fromARGB(255, 242, 251, 242),
+                        leading: Image.asset('assets/images/soil moisture.png'),
+                        title: Text("Soil Moisture:"),
+                        subtitle: Text("${moisture}"),
+                      ),
+                    ),
+                    ListTile(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20)),
+                      leading: Image.asset('assets/images/HeatIndex.png'),
+                      title: Text("Heat Index:"),
+                      subtitle: Text("${heatIndex}"),
+                    ),
+                   
+                  ],
+                ),
+              ),
+            ),
+             Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Card(
+                        color: Colors.white,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: Text(
+                                "Preventive Measures:",
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            if (preventiveMeasures
+                                .containsKey(plantDisease ?? '')) ...[
+                              for (final measure
+                                  in preventiveMeasures[plantDisease ?? '']!)
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: ListTile(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    title: Text("• $measure"),
+                                  ),
+                                ),
+                            ] else ...[
+                              ListTile(
+                                title: Text(
+                                  "Preventive measures not available for this disease.",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+          ],
         ),
       ),
       bottomNavigationBar: NavBar(),
